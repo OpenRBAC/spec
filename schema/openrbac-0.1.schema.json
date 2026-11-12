@@ -138,6 +138,10 @@
               "type": "string",
               "pattern": "^(\\*|@[a-z0-9][a-z0-9._-]{0,63}|\\*?[A-Za-z0-9._:/-]{1,128}\\*?)$"
             }
+          },
+          "persona": {
+            "type": "string",
+            "pattern": "^(owner|admin|operator|security|auditor|support|developer|billing|viewer|x-[a-z0-9][a-z0-9_-]{0,31})$"
           }
         }
       }
