@@ -42,7 +42,7 @@ OAuth Authorization Server metadata:
 | Member | Meaning |
 |---|---|
 | `openrbac_versions_supported` | e.g. `["0.1"]` |
-| `openrbac_registration_endpoint` | Push registration endpoint (§2.6), if offered |
+| `openrbac_registration_endpoint` | Push registration endpoint (§2 item 6), if offered |
 | `openrbac_evaluation_endpoint` | AuthZEN evaluation endpoint (§5.4), if offered |
 
 ## 3. Manifest
@@ -62,7 +62,7 @@ OAuth Authorization Server metadata:
     }
   },
   "roles": {
-    "<role id>": { "title": "Human title", "description": "optional", "actions": ["<pattern>", "..."] }
+    "<role id>": { "title": "Human title", "description": "optional", "persona": "operator", "actions": ["<pattern>", "..."] }
   },
   "default_role": "<role id>"
 }
@@ -77,7 +77,7 @@ OAuth Authorization Server metadata:
 | `app.resource` | no | RFC 9728 resource identifier (URL). When present, the IdP SHOULD bind the manifest to that audience and use it as the `aud` of tokens carrying `perm` |
 | `groups` | yes | Ordered object of groups; at least one |
 | `groups.*.actions` | yes | Object of action id → string (title) or action object |
-| `roles` | no | Suggested roles (IdPs SHOULD offer them as built-ins) |
+| `roles` | no | Suggested roles (IdPs SHOULD offer them as built-ins); each MAY carry a `persona` (§3.3) |
 | `default_role` | no | Role for members with no explicit assignment; omit = no access |
 
 ### 3.1 Action ids
@@ -96,7 +96,37 @@ OAuth Authorization Server metadata:
 | `dangerous` | `true` = destructive or security-sensitive; IdPs SHOULD require explicit confirmation to grant |
 | `deprecated` | `true` = still honored, hide from new grants |
 
-### 3.3 Patterns in roles
+### 3.3 Suggested roles and personas
+
+Each role in `roles` is a recommendation the IdP offers as a ready-made role
+for the app. A role MAY declare a `persona`: the kind of team it is meant for.
+Personas come from a small shared vocabulary so an organization can map its
+groups **once** and have every newly connected app propose matching roles:
+
+| Persona | Typical team |
+|---|---|
+| `owner` | Account owners, break-glass |
+| `admin` | Platform / cloud / server administrators |
+| `operator` | Day-to-day operations (e.g. patching, deployments, devices) |
+| `security` | Security engineering and incident response (may change security settings) |
+| `auditor` | Security audit and compliance (read-only, including logs and evidence) |
+| `support` | Helpdesk / customer support |
+| `developer` | Engineers integrating with the app |
+| `billing` | Finance and billing |
+| `viewer` | Everyone else, read-only |
+
+Apps MAY use other values prefixed with `x-` (e.g. `x-patching`); IdPs treat
+unknown personas as unmapped. Several roles MAY share a persona. A role without
+a persona is offered but never auto-proposed.
+
+IdP behavior (informative): an organization maps groups to personas
+(e.g. "Security team" → `auditor`, "Linux ops" → `operator`). When an app's
+manifest is registered or changes, the IdP proposes assigning each role to the
+groups mapped to its persona; an administrator accepts, adjusts or declines.
+Proposals MUST NOT take effect without acceptance unless the organization
+opted in to automatic assignment for that persona.
+
+### 3.4 Patterns in roles
 
 Role `actions` entries are exact action ids or patterns:
 
@@ -187,7 +217,8 @@ When a re-fetched manifest differs:
 - **App level 1**: serves a valid manifest; enforces `perm`.
 - **IdP level 1**: fetches and validates manifests; grants suggested roles;
   issues `perm` for the audience.
-- **IdP level 2**: custom roles from the catalog, change review (§6), SAML attributes.
+- **IdP level 2**: custom roles from the catalog, change review (§6), SAML attributes,
+  group-to-persona mapping with role proposals (§3.3).
 
 ## 9. Relationship to other work
 
@@ -202,7 +233,7 @@ transport or policy semantics:
 - **UMA 2.0 (User-Managed Access)**: resource servers register resources and
   `resource_scopes` with the authorization server. OpenRBAC keeps that idea of
   app-declared actions, but as a static, cacheable document with optional push
-  registration (§2.6), without UMA's permission tickets and RPT flow.
+  registration (§2 item 6), without UMA's permission tickets and RPT flow.
 - **OpenID AuthZEN**: standard subject/action/resource evaluation API between an
   application (PEP) and a decision point (PDP). OpenRBAC supplies the action
   catalog AuthZEN leaves undefined; §5.4 uses AuthZEN as the runtime check.

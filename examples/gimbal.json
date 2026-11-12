@@ -1,13 +1,22 @@
 {
   "openrbac": "0.1",
-  "app": { "id": "gimbal-dashboard", "name": "Gimbal" },
+  "app": {
+    "id": "gimbal-dashboard",
+    "name": "Gimbal"
+  },
   "groups": {
     "agents": {
       "title": "Hosts and agents",
       "actions": {
         "agents.read": "View hosts, packages and updates",
-        "agents.approve": { "title": "Approve or reject join requests", "dangerous": true },
-        "agents.revoke": { "title": "Revoke a host's certificate", "dangerous": true },
+        "agents.approve": {
+          "title": "Approve or reject join requests",
+          "dangerous": true
+        },
+        "agents.revoke": {
+          "title": "Revoke a host's certificate",
+          "dangerous": true
+        },
         "agents.write": "Edit tags and check-in settings"
       }
     },
@@ -15,9 +24,15 @@
       "title": "Jobs",
       "actions": {
         "jobs.read": "View jobs and output",
-        "jobs.exec": { "title": "Run commands on hosts", "dangerous": true },
+        "jobs.exec": {
+          "title": "Run commands on hosts",
+          "dangerous": true
+        },
         "patch.scan": "Scan for updates",
-        "patch.apply": { "title": "Install updates and reboot", "dangerous": true }
+        "patch.apply": {
+          "title": "Install updates and reboot",
+          "dangerous": true
+        }
       }
     },
     "fim": {
@@ -26,7 +41,10 @@
         "fim.read": "View baselines and changes",
         "fim.scan": "Initialize baselines and rescan",
         "fim.accept": "Accept changes into the baseline",
-        "fim.revert": { "title": "Revert files on hosts", "dangerous": true }
+        "fim.revert": {
+          "title": "Revert files on hosts",
+          "dangerous": true
+        }
       }
     },
     "admin": {
@@ -39,9 +57,49 @@
     }
   },
   "roles": {
-    "admin": { "title": "Admin", "actions": ["*"] },
-    "operator": { "title": "Operator", "actions": ["*.read", "agents.write", "patch.*", "fim.scan", "fim.accept", "jobs.exec"] },
-    "auditor": { "title": "Auditor", "actions": ["*.read"] }
+    "admin": {
+      "title": "Cloud and server admins",
+      "persona": "admin",
+      "actions": [
+        "*"
+      ]
+    },
+    "patching": {
+      "title": "Server patching team",
+      "persona": "operator",
+      "actions": [
+        "agents.read",
+        "jobs.read",
+        "patch.*",
+        "certs.read"
+      ]
+    },
+    "fim-operator": {
+      "title": "File integrity operators",
+      "persona": "x-integrity",
+      "actions": [
+        "agents.read",
+        "@fim"
+      ]
+    },
+    "security": {
+      "title": "Security engineering",
+      "persona": "security",
+      "actions": [
+        "*.read",
+        "agents.approve",
+        "agents.revoke",
+        "fim.revert",
+        "enrollment.write"
+      ]
+    },
+    "auditor": {
+      "title": "Security audit",
+      "persona": "auditor",
+      "actions": [
+        "*.read"
+      ]
+    }
   },
   "default_role": "auditor"
 }
