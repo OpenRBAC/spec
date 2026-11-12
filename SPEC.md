@@ -28,6 +28,22 @@ convention.
 5. The IdP SHOULD re-fetch periodically and honor `ETag` / `Cache-Control`.
    It MUST NOT silently grant actions that appear in a new manifest version
    (see §6).
+6. **Push registration (optional, inspired by UMA 2.0 resource registration).**
+   Apps that cannot host a file (desktop, mobile, on-prem) MAY push the manifest
+   instead: `PUT` the manifest to the IdP's `openrbac_registration_endpoint`,
+   authenticated as the OAuth client (client credentials or private_key_jwt).
+   The IdP stores it exactly as if fetched.
+
+### 2.1 IdP metadata
+
+An IdP that supports OpenRBAC SHOULD advertise it in its OpenID Provider /
+OAuth Authorization Server metadata:
+
+| Member | Meaning |
+|---|---|
+| `openrbac_versions_supported` | e.g. `["0.1"]` |
+| `openrbac_registration_endpoint` | Push registration endpoint (§2.6), if offered |
+| `openrbac_evaluation_endpoint` | AuthZEN evaluation endpoint (§5.4), if offered |
 
 ## 3. Manifest
 
@@ -58,6 +74,7 @@ convention.
 | `app.id` | yes | Stable identifier, `[a-z0-9][a-z0-9._-]{0,63}` |
 | `app.name` | yes | Display name |
 | `app.version` | no | Manifest/app version, informational |
+| `app.resource` | no | RFC 9728 resource identifier (URL). When present, the IdP SHOULD bind the manifest to that audience and use it as the `aud` of tokens carrying `perm` |
 | `groups` | yes | Ordered object of groups; at least one |
 | `groups.*.actions` | yes | Object of action id → string (title) or action object |
 | `roles` | no | Suggested roles (IdPs SHOULD offer them as built-ins) |
@@ -124,6 +141,24 @@ another app's tokens.
 The application checks for the exact action id in `perm`. It MUST treat a
 missing action as denied and MUST ignore unknown ids.
 
+### 5.4 Evaluation API (optional, AuthZEN)
+
+Instead of (or in addition to) carrying `perm` in tokens, an IdP MAY act as an
+OpenID AuthZEN Policy Decision Point. The application asks at request time:
+
+```json
+POST /access/v1/evaluation
+{ "subject":  { "type": "user", "id": "<sub>" },
+  "action":   { "name": "content.publish" },
+  "resource": { "type": "openrbac_app", "id": "<app.id>" } }
+→ { "decision": true }
+```
+
+`action.name` is an OpenRBAC action id. This suits large grant sets,
+per-resource decisions (e.g. one location or device), and revocation without
+waiting for tokens to expire. Applications MAY combine both: `perm` for UI
+hints, the evaluation API for sensitive (`dangerous`) actions.
+
 ## 6. Change management
 
 When a re-fetched manifest differs:
@@ -156,9 +191,21 @@ When a re-fetched manifest differs:
 
 ## 9. Relationship to other work
 
-- **OAuth scopes / RFC 9728**: scopes describe what a *client* may request;
-  OpenRBAC describes what a *user* may do inside the app. RFC 9728 metadata can
-  point to the manifest (`openrbac_uri`).
+OpenRBAC deliberately reuses existing building blocks rather than inventing
+transport or policy semantics:
+
+- **RFC 9728 (OAuth 2.0 Protected Resource Metadata)**: discovery model and
+  resource identity. Its metadata document can point to the manifest
+  (`openrbac_uri`), and `app.resource` binds a manifest to that resource.
+  RFC 9728 `scopes_supported` lists what a *client* may request; OpenRBAC lists
+  what a *user* may do inside the app.
+- **UMA 2.0 (User-Managed Access)**: resource servers register resources and
+  `resource_scopes` with the authorization server. OpenRBAC keeps that idea of
+  app-declared actions, but as a static, cacheable document with optional push
+  registration (§2.6), without UMA's permission tickets and RPT flow.
+- **OpenID AuthZEN**: standard subject/action/resource evaluation API between an
+  application (PEP) and a decision point (PDP). OpenRBAC supplies the action
+  catalog AuthZEN leaves undefined; §5.4 uses AuthZEN as the runtime check.
 - **OpenAPI**: an OpenAPI operation MAY reference required actions with
   `x-openrbac: ["content.publish"]`.
 - **Cedar / Zanzibar / OPA**: policy engines decide; an OpenRBAC manifest can
