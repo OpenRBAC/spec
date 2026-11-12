@@ -32,7 +32,13 @@ convention.
    Apps that cannot host a file (desktop, mobile, on-prem) MAY push the manifest
    instead: `PUT` the manifest to the IdP's `openrbac_registration_endpoint`,
    authenticated as the OAuth client (client credentials or private_key_jwt).
-   The IdP stores it exactly as if fetched.
+   The IdP stores it exactly as if fetched. Request: `PUT` with the manifest as
+   the body. Response `200`:
+   `{ "changed": bool, "added": [ids], "removed": [ids], "role_changes": [ids] }`;
+   `400` with `{ "error": "...", "details": [...] }` for an invalid manifest.
+7. **Source precedence.** A client has one manifest source at a time: a fetch
+   URL or push. A successful push switches the client to push (the IdP stops
+   fetching) until an administrator sets a fetch URL again.
 
 ### 2.1 IdP metadata
 
@@ -133,6 +139,7 @@ Role `actions` entries are exact action ids or patterns:
 - `*` — every action
 - `prefix*` — every action id starting with `prefix` (e.g. `device.*`, `write:*`)
 - `*suffix` — every action id ending with `suffix` (e.g. `*.read`, `*:read`)
+- `*infix*` — every action id containing `infix` (e.g. `*:content*`)
 - `@group` — every action in a group
 
 Patterns are expanded by the IdP against the current manifest. Tokens MUST
@@ -154,10 +161,13 @@ another app's tokens.
 ### 5.1 OIDC / OAuth
 
 - Claim `perm`: array of granted action ids for **this** client (audience).
-- Claim `roles`: array of role ids the user holds for this client (informational).
+- Claim `roles`: array of role ids the user holds for this client (informational):
+  manifest role ids for suggested roles, IdP-assigned ids for custom roles.
 - Claim `openrbac`: the manifest version (or ETag) the grants were computed from.
-- Included in the ID token and/or access token and userinfo when the client
-  requests scope `openrbac` (IdPs MAY include them by default).
+- The access token issued for the app's audience MUST carry `perm` (an empty
+  array when nothing is granted). The ID token and userinfo carry `perm`,
+  `roles` and `openrbac` when the client requests scope `openrbac`; IdPs MAY
+  include them by default.
 - Large grant sets: the IdP MAY omit `perm` and set `perm_uri` to a userinfo-like
   endpoint returning `{ "perm": [...] }`.
 
@@ -200,6 +210,9 @@ When a re-fetched manifest differs:
   action returns.
 - **Changed suggested roles**: IdP shows a diff; built-in role definitions update
   only after admin acceptance.
+- **Custom roles** (created by administrators): store the expanded action list
+  at save time. New actions never join a custom role automatically; the IdP
+  SHOULD list them as "new since this role was saved".
 - **Unreachable manifest**: keep the last good copy; never drop grants because a
   fetch failed.
 
