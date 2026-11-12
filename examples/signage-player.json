@@ -1,0 +1,27 @@
+{
+  "openrbac": "0.1",
+  "app": { "id": "signage-player", "name": "Signage Player" },
+  "groups": {
+    "device": {
+      "title": "Devices",
+      "actions": {
+        "device.read": "View screens",
+        "device.register": "Pair a new screen",
+        "device.reset": { "title": "Factory-reset a screen", "dangerous": true },
+        "device.volume": "Change volume"
+      }
+    },
+    "content": {
+      "title": "Content",
+      "actions": {
+        "content.read": "View content",
+        "content.publish": "Publish to screens"
+      }
+    }
+  },
+  "roles": {
+    "operator": { "title": "Device operator", "actions": ["device.*", "content.read"] },
+    "editor": { "title": "Content editor", "actions": ["@content", "device.read"] },
+    "viewer": { "title": "Viewer", "actions": ["*.read"] }
+  }
+}

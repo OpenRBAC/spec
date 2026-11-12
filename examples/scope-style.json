@@ -1,0 +1,23 @@
+{
+  "openrbac": "0.1",
+  "app": { "id": "cms-api", "name": "CMS API" },
+  "groups": {
+    "content": {
+      "title": "Content",
+      "actions": {
+        "read:content": "Read articles",
+        "write:content": "Create and edit articles",
+        "delete:content": { "title": "Delete articles", "dangerous": true }
+      }
+    },
+    "users": {
+      "title": "Users",
+      "actions": { "read:users": "List users", "write:users": "Invite and edit users" }
+    }
+  },
+  "roles": {
+    "reader": { "title": "Reader", "actions": ["read:*"] },
+    "writer": { "title": "Writer", "actions": ["read:*", "write:content"] }
+  },
+  "default_role": "reader"
+}

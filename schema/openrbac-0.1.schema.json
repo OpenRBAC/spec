@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openrbac.com/schema/openrbac-0.1.schema.json",
+  "title": "OpenRBAC manifest 0.1",
+  "type": "object",
+  "required": ["openrbac", "app", "groups"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "openrbac": { "const": "0.1" },
+    "app": {
+      "type": "object",
+      "required": ["id", "name"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "version": { "type": "string", "maxLength": 64 }
+      }
+    },
+    "groups": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "$ref": "#/$defs/id" },
+      "additionalProperties": {
+        "type": "object",
+        "required": ["title", "actions"],
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "description": { "type": "string", "maxLength": 2000 },
+          "actions": {
+            "type": "object",
+            "minProperties": 1,
+            "propertyNames": { "$ref": "#/$defs/actionId" },
+            "additionalProperties": {
+              "oneOf": [
+                { "type": "string", "minLength": 1, "maxLength": 256 },
+                {
+                  "type": "object",
+                  "required": ["title"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "title": { "type": "string", "minLength": 1, "maxLength": 256 },
+                    "description": { "type": "string", "maxLength": 2000 },
+                    "dangerous": { "type": "boolean" },
+                    "deprecated": { "type": "boolean" }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "roles": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/id" },
+      "additionalProperties": {
+        "type": "object",
+        "required": ["title", "actions"],
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "description": { "type": "string", "maxLength": 2000 },
+          "actions": {
+            "type": "array",
+            "items": { "type": "string", "pattern": "^(\\*|@[a-z0-9][a-z0-9._-]{0,63}|\\*?[A-Za-z0-9._:/-]{1,128}\\*?)$" }
+          }
+        }
+      }
+    },
+    "default_role": { "$ref": "#/$defs/id" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" },
+    "actionId": { "type": "string", "pattern": "^[A-Za-z0-9._:/-]{1,128}$" }
+  }
+}

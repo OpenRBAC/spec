@@ -1,0 +1,47 @@
+{
+  "openrbac": "0.1",
+  "app": { "id": "gimbal-dashboard", "name": "Gimbal" },
+  "groups": {
+    "agents": {
+      "title": "Hosts and agents",
+      "actions": {
+        "agents.read": "View hosts, packages and updates",
+        "agents.approve": { "title": "Approve or reject join requests", "dangerous": true },
+        "agents.revoke": { "title": "Revoke a host's certificate", "dangerous": true },
+        "agents.write": "Edit tags and check-in settings"
+      }
+    },
+    "jobs": {
+      "title": "Jobs",
+      "actions": {
+        "jobs.read": "View jobs and output",
+        "jobs.exec": { "title": "Run commands on hosts", "dangerous": true },
+        "patch.scan": "Scan for updates",
+        "patch.apply": { "title": "Install updates and reboot", "dangerous": true }
+      }
+    },
+    "fim": {
+      "title": "File integrity",
+      "actions": {
+        "fim.read": "View baselines and changes",
+        "fim.scan": "Initialize baselines and rescan",
+        "fim.accept": "Accept changes into the baseline",
+        "fim.revert": { "title": "Revert files on hosts", "dangerous": true }
+      }
+    },
+    "admin": {
+      "title": "Administration",
+      "actions": {
+        "certs.read": "View certificates",
+        "settings.write": "Change fleet and policy settings",
+        "enrollment.write": "Create join tokens and pre-register hosts"
+      }
+    }
+  },
+  "roles": {
+    "admin": { "title": "Admin", "actions": ["*"] },
+    "operator": { "title": "Operator", "actions": ["*.read", "agents.write", "patch.*", "fim.scan", "fim.accept", "jobs.exec"] },
+    "auditor": { "title": "Auditor", "actions": ["*.read"] }
+  },
+  "default_role": "auditor"
+}
