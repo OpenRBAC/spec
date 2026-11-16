@@ -1,0 +1,12 @@
+{{ define "main" }}
+<div class="wrap doc{{ if .Params.toc }} has-toc{{ end }}">
+  <article class="prose">
+    <h1>{{ .Title }}</h1>
+    {{ with .Description }}<p class="lede">{{ . }}</p>{{ end }}
+    {{ .Content }}
+  </article>
+  {{ if .Params.toc }}
+  <aside class="toc" aria-label="Contents"><div class="toc-in"><p class="toc-h">On this page</p>{{ .TableOfContents }}</div></aside>
+  {{ end }}
+</div>
+{{ end }}

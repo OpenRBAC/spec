@@ -1,0 +1,7 @@
+/content/spec.md
+/content/examples.md
+/static/schema/
+/static/examples/
+/public/
+/resources/
+.hugo_build.lock

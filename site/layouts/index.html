@@ -1,0 +1,15 @@
+{{ define "main" }}
+<section class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Open specification · version {{ site.Params.version }} (draft)</p>
+    <h1>Apps publish the permissions they understand.<br>Identity providers read them.</h1>
+    <p class="lede">OpenRBAC is a small JSON format for an application to describe its actions, how they group, and the roles it suggests. Your identity provider fetches it, shows admins real checkboxes, and puts exactly the granted actions in the token.</p>
+    <div class="cta">
+      <a class="btn primary" href="/quick-start/apps/">Add it to your app</a>
+      <a class="btn" href="/quick-start/idps/">Support it in your IdP</a>
+      <a class="btn ghost" href="/spec/">Read the spec</a>
+    </div>
+  </div>
+</section>
+{{ .Content }}
+{{ end }}
