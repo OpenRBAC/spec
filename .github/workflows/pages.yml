@@ -1,0 +1,59 @@
+name: Publish openrbac.com
+
+# Builds the Hugo site in site/ (spec, schema and examples are generated from
+# this commit by site/build.sh) and publishes it with GitHub Pages.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate examples against the schema
+        run: |
+          pip install --quiet "jsonschema==4.23.0"
+          python3 - <<'PY'
+          import json, glob, sys, jsonschema
+          v = jsonschema.Draft202012Validator(json.load(open("schema/openrbac-0.1.schema.json")))
+          bad = 0
+          for f in sorted(glob.glob("examples/*.json")):
+              errs = list(v.iter_errors(json.load(open(f))))
+              print(f, "ok" if not errs else [e.message for e in errs])
+              bad += bool(errs)
+          sys.exit(1 if bad else 0)
+          PY
+      - name: Install Hugo
+        run: |
+          v=0.139.4
+          curl -sSL -o /tmp/hugo.deb "https://github.com/gohugoio/hugo/releases/download/v${v}/hugo_extended_${v}_linux-amd64.deb"
+          sudo dpkg -i /tmp/hugo.deb
+      - uses: actions/configure-pages@v5
+      - name: Build
+        run: |
+          sh site/build.sh
+          hugo --minify -s site -d ../public
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
